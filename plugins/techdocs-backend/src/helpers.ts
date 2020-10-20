@@ -24,6 +24,8 @@ import { Entity } from '@backstage/catalog-model';
 import { InputError } from '@backstage/backend-common';
 import { RemoteProtocol } from './techdocs/stages/prepare/types';
 import { Logger } from 'winston';
+import { ConfigReader, Config } from '@backstage/config';
+import { loadBackendConfig } from '@backstage/backend-common';
 
 // Enables core.longpaths on windows to prevent crashing when checking out repos with long foldernames and/or deep nesting
 // @ts-ignore
@@ -118,23 +120,18 @@ export const checkoutGitRepository = async (
   repoUrl: string,
   logger: Logger,
 ): Promise<string> => {
+  const config = ConfigReader.fromConfigs(await loadBackendConfig());
   const parsedGitLocation = parseGitUrl(repoUrl);
   const repositoryTmpPath = await getGitRepositoryTempFolder(repoUrl);
 
-  // TODO: Should propably not be hardcoded names of env variables, but seems too hard to access config down here
-  const user =
-    process.env.GITHUB_PRIVATE_TOKEN_USER ||
-    process.env.GITLAB_PRIVATE_TOKEN_USER ||
-    process.env.AZURE_PRIVATE_TOKEN_USER ||
-    '';
-  const token =
-    process.env.GITHUB_TOKEN ||
-    process.env.GITLAB_PRIVATE_TOKEN_USER ||
-    process.env.AZURE_TOKEN ||
-    '';
+  // const user = 'donkeykong';
+  const tokenConfig = config.getOptionalConfigArray('integrations.gitlab');
+  const token = tokenConfig[0].getOptionalString('token');
 
+  console.log(`hi! dad ${token}`)
   if (fs.existsSync(repositoryTmpPath)) {
     try {
+      console.log("Hi Mr Clone");
       const repository = await Repository.open(repositoryTmpPath);
       const currentBranchName = (
         await repository.getCurrentBranch()
@@ -153,8 +150,9 @@ export const checkoutGitRepository = async (
     }
   }
 
-  if (user && token) {
-    parsedGitLocation.token = `${user}:${token}`;
+  console.log("Bye Mr Clone");
+  if (token) {
+    parsedGitLocation.token = `:${token}`;
   }
 
   const repositoryCheckoutUrl = parsedGitLocation.toString('https');

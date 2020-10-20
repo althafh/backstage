@@ -95,10 +95,8 @@ function getGitlabRequestOptions(config: Config): RequestInit {
     'PRIVATE-TOKEN': '',
   };
 
-  const token =
-    config.getOptionalString('catalog.processors.gitlab.privateToken') ??
-    config.getOptionalString('catalog.processors.gitlabApi.privateToken') ??
-    process.env.GITLAB_TOKEN;
+  const gitlabIntegrations = config.getOptionalConfigArray('integrations.gitlab');
+  const token = gitlabIntegrations[0].getOptionalString('token');
 
   if (token) {
     headers['PRIVATE-TOKEN'] = token;
@@ -168,9 +166,11 @@ async function getGitlabDefaultBranch(
   try {
     const raw = await fetch(path, options);
 
+    console.log(`hi althaf - ${path} ${options}`);
     if (!raw.ok) {
+      console.log(raw);
       throw new Error(
-        `Failed to load url: ${raw.status} ${raw.statusText}. Make sure you have permission to repository: ${repositoryUrl}`,
+        `Failed to Althaf!! load url: ${raw.status} ${raw.statusText}. Make sure you have permission to repository: ${repositoryUrl}`,
       );
     }
 
@@ -182,7 +182,7 @@ async function getGitlabDefaultBranch(
     if (!name) {
       throw new Error('Not found gitlab default branch');
     }
-
+    console.log(`the name is ${name}`)
     return name;
   } catch (error) {
     throw new Error(`Failed to get gitlab default branch: ${error}`);
